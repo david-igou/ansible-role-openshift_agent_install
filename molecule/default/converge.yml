@@ -1,0 +1,69 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars:
+    okd_version: "4.21.0-okd-scos.6"
+    okd_github_release_url: "https://github.com/okd-project/okd/releases/download/{{ okd_version }}"
+    openshift_agent_install_version: "{{ okd_version }}"
+    openshift_agent_install_tarball_url: "{{ okd_github_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
+    openshift_agent_install_work_dir: /tmp/molecule-openshift-agent-test
+    openshift_agent_install_config:
+      apiVersion: v1
+      baseDomain: test.example.com
+      metadata:
+        name: test-cluster
+      compute:
+        - architecture: amd64
+          hyperthreading: Enabled
+          name: worker
+          replicas: 0
+      controlPlane:
+        architecture: amd64
+        hyperthreading: Enabled
+        name: master
+        replicas: 1
+      networking:
+        clusterNetwork:
+          - cidr: 10.128.0.0/14
+            hostPrefix: 23
+        machineNetwork:
+          - cidr: 192.168.0.0/16
+        networkType: OVNKubernetes
+        serviceNetwork:
+          - 172.30.0.0/16
+      platform:
+        none: {}
+      pullSecret: '{"auths":{"fake":{"auth":"dGVzdDp0ZXN0"}}}'
+      sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINHO7UsiIgAepf5+s2z+1CbPQf2eqMo8aNK/vT9Oaf4B"
+    openshift_agent_install_agent_config:
+      bootArtifactsBaseURL: http://10.13.37.240/
+      apiVersion: v1beta1
+      kind: AgentConfig
+      metadata:
+        name: test-cluster
+      rendezvousIP: 192.168.111.80
+    openshift_agent_install_additional_manifests:
+      - file_name: test-manifest.yml
+        contents: |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: test-config
+            namespace: default
+          data:
+            key: value
+  pre_tasks:
+    - name: Download and install oc client
+      ansible.builtin.unarchive:
+        src: "{{ okd_github_release_url }}/openshift-client-linux-{{ okd_version }}.tar.gz"
+        dest: /usr/local/bin
+        remote_src: true
+        include:
+          - oc
+        mode: "0755"
+  roles:
+    - role: david-igou.openshift_agent_install
+  tags:
+    - download
+    - manifests

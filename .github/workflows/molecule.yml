@@ -1,0 +1,36 @@
+---
+name: Molecule Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  molecule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible-role-openshift_agent_install
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core molecule molecule-plugins[podman]
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install containers.podman
+
+      - name: Run Molecule test
+        run: molecule test
+        working-directory: ansible-role-openshift_agent_install

@@ -1,0 +1,41 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ansible-role-openshift_agent_install
+
+- name: Download openshift-install
+  ansible.builtin.include_tasks:
+    file: download.yml
+    apply:
+      tags:
+        - download
+  tags:
+    - download
+
+- name: Render cluster manifests
+  ansible.builtin.include_tasks:
+    file: manifests.yml
+    apply:
+      tags:
+        - manifests
+  tags:
+    - manifests
+
+- name: Run openshift-install
+  ansible.builtin.include_tasks:
+    file: install.yml
+    apply:
+      tags:
+        - install
+  tags:
+    - install
+
+- name: Clean up working directory
+  ansible.builtin.include_tasks:
+    file: cleanup.yml
+    apply:
+      tags:
+        - never
+        - cleanup
+  tags:
+    - never
+    - cleanup

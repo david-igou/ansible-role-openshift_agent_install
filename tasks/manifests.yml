@@ -1,0 +1,47 @@
+---
+- name: Create cluster manifests directory
+  ansible.builtin.file:
+    path: "{{ openshift_agent_install_work_dir }}/cluster-manifests"
+    state: directory
+    mode: "0755"
+
+- name: Validate that openshift_agent_install_config is provided
+  ansible.builtin.assert:
+    that:
+      - openshift_agent_install_config | length > 0
+    fail_msg: "openshift_agent_install_config must be set to a dictionary representing install-config.yaml"
+
+- name: Validate that openshift_agent_install_agent_config is provided
+  ansible.builtin.assert:
+    that:
+      - openshift_agent_install_agent_config | length > 0
+    fail_msg: "openshift_agent_install_agent_config must be set to a dictionary representing agent-config.yaml"
+
+- name: Render install-config.yaml
+  ansible.builtin.copy:
+    content: "{{ openshift_agent_install_config | to_nice_yaml(indent=2) }}"
+    dest: "{{ openshift_agent_install_work_dir }}/cluster-manifests/install-config.yaml"
+    mode: "0600"
+  no_log: true
+
+- name: Render agent-config.yaml
+  ansible.builtin.copy:
+    content: "{{ openshift_agent_install_agent_config | to_nice_yaml(indent=2) }}"
+    dest: "{{ openshift_agent_install_work_dir }}/cluster-manifests/agent-config.yaml"
+    mode: "0644"
+
+- name: Create openshift additional manifests directory
+  ansible.builtin.file:
+    path: "{{ openshift_agent_install_work_dir }}/cluster-manifests/openshift"
+    state: directory
+    mode: "0755"
+  when: openshift_agent_install_additional_manifests | length > 0
+
+- name: Render additional manifests
+  ansible.builtin.copy:
+    content: "{{ item.contents }}"
+    dest: "{{ openshift_agent_install_work_dir }}/cluster-manifests/openshift/{{ item.file_name }}"
+    mode: "0644"
+  loop: "{{ openshift_agent_install_additional_manifests }}"
+  loop_control:
+    label: "{{ item.file_name }}"

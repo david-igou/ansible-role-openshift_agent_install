@@ -1,0 +1,7 @@
+---
+- name: Run openshift-install agent create pxe-files
+  ansible.builtin.command:
+    cmd: >-
+      {{ openshift_install_binary }} agent create pxe-files
+      --dir {{ openshift_agent_install_work_dir }}/cluster-manifests
+  changed_when: true

@@ -1,0 +1,56 @@
+---
+argument_specs:
+  main:
+    short_description: Download openshift-install and render agent-based installer manifests
+    options:
+      openshift_agent_install_version:
+        description: >-
+          OpenShift version to install (e.g. "4.20.14").
+        type: str
+        required: true
+
+      openshift_agent_install_arch:
+        description: >-
+          Architecture for the openshift-install binary.
+        type: str
+        default: x86_64
+
+      openshift_agent_install_mirror_url:
+        description: >-
+          Base mirror URL for downloading the openshift-install tarball.
+        type: str
+        default: https://mirror.openshift.com/pub/openshift-v4
+
+      openshift_agent_install_tarball_url:
+        description: >-
+          Full URL to the openshift-install tarball.
+          Constructed automatically from version, arch, and mirror_url.
+          Override to use a completely custom URL.
+        type: str
+
+      openshift_agent_install_work_dir:
+        description: >-
+          Working directory for all role artifacts (binary, configs, boot artifacts).
+        type: str
+
+      openshift_agent_install_config:
+        description: >-
+          Dictionary representing the contents of install-config.yaml.
+          Converted directly to YAML via to_nice_yaml.
+        type: dict
+        required: true
+
+      openshift_agent_install_agent_config:
+        description: >-
+          Dictionary representing the contents of agent-config.yaml.
+          Converted directly to YAML via to_nice_yaml.
+        type: dict
+        required: true
+
+      openshift_agent_install_additional_manifests:
+        description: >-
+          List of additional manifests to place in the openshift/ directory.
+          Each item must have a file_name and contents key.
+        type: list
+        elements: dict
+        default: []

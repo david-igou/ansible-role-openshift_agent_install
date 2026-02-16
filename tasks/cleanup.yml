@@ -1,0 +1,5 @@
+---
+- name: Remove working directory
+  ansible.builtin.file:
+    path: "{{ openshift_agent_install_work_dir }}"
+    state: absent

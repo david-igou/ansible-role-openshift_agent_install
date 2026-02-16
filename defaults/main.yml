@@ -1,0 +1,106 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ansible-role-openshift_agent_install
+
+# OpenShift version to install (e.g. "4.20.14")
+openshift_agent_install_version: ""
+
+# Architecture for the openshift-install binary
+openshift_agent_install_arch: "x86_64"
+
+# Base mirror URL
+openshift_agent_install_mirror_url: "https://mirror.openshift.com/pub/openshift-v4"
+
+# Full URL to the openshift-install tarball (constructed from the above variables)
+openshift_agent_install_tarball_url: >-
+  {{ openshift_agent_install_mirror_url }}/{{ openshift_agent_install_arch }}/clients/ocp/{{ openshift_agent_install_version }}/openshift-install-linux.tar.gz
+
+# Working directory for all role artifacts (binary, configs, ISO output)
+openshift_agent_install_work_dir: "{{ ansible_env.HOME }}/openshift-agent-install"
+
+# install-config.yaml content as a dictionary.
+# The dictionary is converted directly to YAML and written to install-config.yaml.
+# Example:
+#   openshift_agent_install_config:
+#     apiVersion: v1
+#     baseDomain: example.com
+#     metadata:
+#       name: my-cluster
+#     compute:
+#       - architecture: amd64
+#         hyperthreading: Enabled
+#         name: worker
+#         replicas: 0
+#     controlPlane:
+#       architecture: amd64
+#       hyperthreading: Enabled
+#       name: master
+#       replicas: 1
+#     networking:
+#       clusterNetwork:
+#         - cidr: 10.128.0.0/14
+#           hostPrefix: 23
+#       machineNetwork:
+#         - cidr: 192.168.0.0/16
+#       networkType: OVNKubernetes
+#       serviceNetwork:
+#         - 172.30.0.0/16
+#     platform:
+#       none: {}
+#     pullSecret: '<pull_secret>'
+#     sshKey: '<ssh_pub_key>'
+openshift_agent_install_config: {}
+
+# agent-config.yaml content as a dictionary.
+# The dictionary is converted directly to YAML and written to agent-config.yaml.
+# Example:
+#   openshift_agent_install_agent_config:
+#     apiVersion: v1beta1
+#     kind: AgentConfig
+#     metadata:
+#       name: my-cluster
+#     rendezvousIP: 192.168.111.80
+#     hosts:
+#       - hostname: master-0
+#         interfaces:
+#           - name: eno1
+#             macAddress: "00:ef:44:21:e6:a5"
+#         rootDeviceHints:
+#           deviceName: /dev/sdb
+#         networkConfig:
+#           interfaces:
+#             - name: eno1
+#               type: ethernet
+#               state: up
+#               mac-address: "00:ef:44:21:e6:a5"
+#               ipv4:
+#                 enabled: true
+#                 address:
+#                   - ip: 192.168.111.80
+#                     prefix-length: 23
+#                 dhcp: false
+#           dns-resolver:
+#             config:
+#               server:
+#                 - 192.168.111.1
+#           routes:
+#             config:
+#               - destination: 0.0.0.0/0
+#                 next-hop-address: 192.168.111.2
+#                 next-hop-interface: eno1
+#                 table-id: 254
+openshift_agent_install_agent_config: {}
+
+# Additional manifests to include in the cluster-manifests directory.
+# Each item requires a file_name and contents (raw string).
+# Example:
+#   openshift_agent_install_additional_manifests:
+#     - file_name: data-storage.yml
+#       contents: |
+#         apiVersion: machineconfiguration.openshift.io/v1
+#         kind: MachineConfig
+#         metadata:
+#           labels:
+#             machineconfiguration.openshift.io/role: master
+#           name: 98-data-partition
+openshift_agent_install_additional_manifests: []

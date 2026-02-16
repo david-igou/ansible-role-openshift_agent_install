@@ -1,0 +1,33 @@
+---
+- name: Validate that openshift_agent_install_version is set
+  ansible.builtin.assert:
+    that:
+      - openshift_agent_install_version | length > 0
+    fail_msg: "openshift_agent_install_version must be set (e.g. '4.20.14')"
+
+- name: Create working directory
+  ansible.builtin.file:
+    path: "{{ openshift_agent_install_work_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download openshift-install tarball
+  ansible.builtin.get_url:
+    url: "{{ openshift_agent_install_tarball_url }}"
+    dest: "{{ openshift_agent_install_work_dir }}/openshift-install-linux.tar.gz"
+    mode: "0644"
+
+- name: Extract openshift-install
+  ansible.builtin.unarchive:
+    src: "{{ openshift_agent_install_work_dir }}/openshift-install-linux.tar.gz"
+    dest: "{{ openshift_agent_install_work_dir }}"
+    remote_src: true
+    include:
+      - openshift-install
+    mode: "0755"
+    creates: "{{ openshift_agent_install_work_dir }}/openshift-install"
+
+- name: Set resolved paths as facts
+  ansible.builtin.set_fact:
+    openshift_agent_install_work_dir_resolved: "{{ openshift_agent_install_work_dir }}"
+    openshift_install_binary: "{{ openshift_agent_install_work_dir }}/openshift-install"
