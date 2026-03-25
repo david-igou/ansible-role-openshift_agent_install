@@ -1,7 +1,32 @@
 ---
-- name: Run openshift-install agent create pxe-files
+- name: Validate openshift_agent_install_output_type
+  ansible.builtin.assert:
+    that:
+      - openshift_agent_install_output_type in ["pxe-files", "image"]
+    fail_msg: >-
+      openshift_agent_install_output_type must be "pxe-files" or "image",
+      got "{{ openshift_agent_install_output_type }}"
+
+- name: Check that oc is available on PATH
+  ansible.builtin.command:
+    cmd: oc version --client
+  changed_when: false
+  failed_when: false
+  register: _oc_check
+  when: openshift_agent_install_validate_oc
+
+- name: Assert oc is available
+  ansible.builtin.assert:
+    that:
+      - _oc_check.rc == 0
+    fail_msg: >-
+      oc client not found on PATH. openshift-install requires oc to extract
+      release metadata. Install oc or set openshift_agent_install_validate_oc: false
+  when: openshift_agent_install_validate_oc
+
+- name: Run openshift-install agent create {{ openshift_agent_install_output_type }}
   ansible.builtin.command:
     cmd: >-
-      {{ openshift_install_binary }} agent create pxe-files
+      {{ openshift_install_binary }} agent create {{ openshift_agent_install_output_type }}
       --dir {{ openshift_agent_install_work_dir }}/cluster-manifests
   changed_when: true

@@ -8,6 +8,7 @@
     openshift_agent_install_version: "{{ okd_version }}"
     openshift_agent_install_tarball_url: "{{ okd_github_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
     openshift_agent_install_work_dir: /tmp/molecule-openshift-agent-test
+    openshift_agent_install_output_type: "image"
     openshift_agent_install_checksum_url: "{{ okd_github_release_url }}/sha256sum.txt"
     openshift_agent_install_config:
       apiVersion: v1
@@ -38,7 +39,6 @@
       pullSecret: '{"auths":{"fake":{"auth":"dGVzdDp0ZXN0"}}}'
       sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINHO7UsiIgAepf5+s2z+1CbPQf2eqMo8aNK/vT9Oaf4B"
     openshift_agent_install_agent_config:
-      bootArtifactsBaseURL: http://10.13.37.240/
       apiVersion: v1beta1
       kind: AgentConfig
       metadata:
@@ -65,6 +65,3 @@
         mode: "0755"
   roles:
     - role: david-igou.openshift_agent_install
-  tags:
-    - download
-    - manifests

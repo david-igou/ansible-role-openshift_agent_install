@@ -18,6 +18,21 @@ openshift_agent_install_tarball_url: >-
 # Working directory for all role artifacts (binary, configs, ISO output)
 openshift_agent_install_work_dir: "{{ ansible_env.HOME }}/openshift-agent-install"
 
+# Verify the SHA256 checksum of the downloaded tarball.
+# Fetches sha256sum.txt from the mirror and validates before extraction.
+# Disable for sources that do not publish sha256sum.txt.
+openshift_agent_install_verify_checksum: true
+
+# URL to the sha256sum.txt file for checksum verification.
+# Auto-constructed from OCP mirror variables; override for OKD or custom mirrors.
+# OKD example: "https://github.com/okd-project/okd/releases/download/{{ version }}/sha256sum.txt"
+openshift_agent_install_checksum_url: >-
+  {{ openshift_agent_install_mirror_url }}/{{ openshift_agent_install_arch }}/clients/ocp/{{ openshift_agent_install_version }}/sha256sum.txt
+
+# Validate that the oc client is available on PATH before running openshift-install.
+# openshift-install requires oc internally to extract release metadata.
+openshift_agent_install_validate_oc: true
+
 # install-config.yaml content as a dictionary.
 # The dictionary is converted directly to YAML and written to install-config.yaml.
 # Example:
@@ -90,6 +105,11 @@ openshift_agent_install_config: {}
 #                 next-hop-interface: eno1
 #                 table-id: 254
 openshift_agent_install_agent_config: {}
+
+# Output type: "pxe-files" or "image"
+# - pxe-files: runs "agent create pxe-files" to produce PXE/iPXE boot artifacts
+# - image: runs "agent create image" to produce an agent ISO
+openshift_agent_install_output_type: "pxe-files"
 
 # Additional manifests to include in the cluster-manifests directory.
 # Each item requires a file_name and contents (raw string).

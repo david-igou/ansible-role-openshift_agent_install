@@ -1,6 +1,6 @@
 # david-igou.openshift_agent_install
 
-Downloads `openshift-install` and generates agent-based installer PXE boot artifacts for OpenShift Container Platform.
+Downloads `openshift-install` and generates agent-based installer boot artifacts (PXE files or ISO image) for OpenShift Container Platform.
 
 ## Requirements
 
@@ -26,6 +26,10 @@ Downloads `openshift-install` and generates agent-based installer PXE boot artif
 | `openshift_agent_install_mirror_url` | `"https://mirror.openshift.com/pub/openshift-v4"` | Base mirror URL |
 | `openshift_agent_install_tarball_url` | *(constructed from version, arch, mirror)* | Full URL to the tarball. Override for custom mirrors or OKD |
 | `openshift_agent_install_work_dir` | `"{{ ansible_env.HOME }}/openshift-agent-install"` | Working directory for all artifacts |
+| `openshift_agent_install_output_type` | `"pxe-files"` | Output type: `"pxe-files"` for PXE/iPXE boot artifacts, `"image"` for a bootable agent ISO |
+| `openshift_agent_install_verify_checksum` | `true` | Verify SHA256 checksum of the downloaded tarball. Disable for sources without `sha256sum.txt` |
+| `openshift_agent_install_checksum_url` | *(constructed from version, arch, mirror)* | URL to `sha256sum.txt` for checksum verification. Override for OKD or custom mirrors |
+| `openshift_agent_install_validate_oc` | `true` | Validate that `oc` is on PATH before running `openshift-install` |
 | `openshift_agent_install_additional_manifests` | `[]` | List of extra manifests to place in `openshift/` directory |
 
 ### Additional Manifests Format
@@ -47,7 +51,7 @@ openshift_agent_install_additional_manifests:
 |---|---|
 | `download` | Download and extract the `openshift-install` binary |
 | `manifests` | Render `install-config.yaml`, `agent-config.yaml`, and additional manifests |
-| `install` | Run `openshift-install agent create pxe-files` |
+| `install` | Run `openshift-install agent create pxe-files` or `agent create image` depending on `output_type` |
 | `cleanup` | Remove the working directory (never runs by default) |
 
 ## Example Playbook
@@ -101,7 +105,7 @@ openshift_agent_install_additional_manifests:
 
 ### OKD
 
-Override `openshift_agent_install_tarball_url` to pull from the OKD GitHub releases:
+Override `openshift_agent_install_tarball_url` and `openshift_agent_install_checksum_url` to pull from the OKD GitHub releases:
 
 ```yaml
 - hosts: localhost
@@ -115,6 +119,7 @@ Override `openshift_agent_install_tarball_url` to pull from the OKD GitHub relea
       vars:
         openshift_agent_install_version: "{{ okd_version }}"
         openshift_agent_install_tarball_url: "{{ okd_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
+        openshift_agent_install_checksum_url: "{{ okd_release_url }}/sha256sum.txt"
         openshift_agent_install_config:
           apiVersion: v1
           baseDomain: example.com
@@ -128,6 +133,57 @@ Override `openshift_agent_install_tarball_url` to pull from the OKD GitHub relea
             name: my-okd-cluster
           rendezvousIP: 192.168.111.80
 ```
+
+### Generating an ISO Instead of PXE Files
+
+Set `openshift_agent_install_output_type` to `"image"` to produce a bootable agent ISO:
+
+```yaml
+- hosts: localhost
+  connection: local
+  gather_facts: true
+  roles:
+    - role: david-igou.openshift_agent_install
+      vars:
+        openshift_agent_install_version: "4.20.14"
+        openshift_agent_install_output_type: "image"
+        openshift_agent_install_config:
+          apiVersion: v1
+          baseDomain: example.com
+          metadata:
+            name: my-cluster
+          compute:
+            - architecture: amd64
+              hyperthreading: Enabled
+              name: worker
+              replicas: 0
+          controlPlane:
+            architecture: amd64
+            hyperthreading: Enabled
+            name: master
+            replicas: 1
+          networking:
+            clusterNetwork:
+              - cidr: 10.128.0.0/14
+                hostPrefix: 23
+            machineNetwork:
+              - cidr: 192.168.0.0/16
+            networkType: OVNKubernetes
+            serviceNetwork:
+              - 172.30.0.0/16
+          platform:
+            none: {}
+          pullSecret: '{{ pull_secret }}'
+          sshKey: '{{ ssh_pub_key }}'
+        openshift_agent_install_agent_config:
+          apiVersion: v1beta1
+          kind: AgentConfig
+          metadata:
+            name: my-cluster
+          rendezvousIP: 192.168.111.80
+```
+
+The ISO will be written to `<work_dir>/cluster-manifests/agent.<arch>.iso`.
 
 ## Running Specific Phases
 

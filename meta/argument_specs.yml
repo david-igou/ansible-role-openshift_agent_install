@@ -47,6 +47,40 @@ argument_specs:
         type: dict
         required: true
 
+      openshift_agent_install_verify_checksum:
+        description: >-
+          Verify the SHA256 checksum of the downloaded tarball against sha256sum.txt.
+          Disable for sources that do not publish sha256sum.txt.
+        type: bool
+        default: true
+
+      openshift_agent_install_checksum_url:
+        description: >-
+          URL to the sha256sum.txt file for checksum verification.
+          Auto-constructed from mirror_url, arch, and version for OCP.
+          Override for OKD or custom mirrors that host sha256sum.txt at
+          a different path.
+        type: str
+
+      openshift_agent_install_validate_oc:
+        description: >-
+          Validate that the oc client is available on PATH before running
+          openshift-install. openshift-install calls oc internally to extract
+          release metadata.
+        type: bool
+        default: true
+
+      openshift_agent_install_output_type:
+        description: >-
+          Type of agent artifacts to generate.
+          "pxe-files" produces PXE/iPXE boot artifacts,
+          "image" produces a bootable agent ISO.
+        type: str
+        default: pxe-files
+        choices:
+          - pxe-files
+          - image
+
       openshift_agent_install_additional_manifests:
         description: >-
           List of additional manifests to place in the openshift/ directory.

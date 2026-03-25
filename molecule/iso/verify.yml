@@ -1,0 +1,47 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    work_dir: /tmp/molecule-openshift-agent-test
+    cluster_manifests_dir: "{{ work_dir }}/cluster-manifests"
+    expected_arch: x86_64
+  tasks:
+    - name: Check openshift-install binary exists
+      ansible.builtin.stat:
+        path: "{{ work_dir }}/openshift-install"
+      register: _binary
+
+    - name: Assert openshift-install binary exists
+      ansible.builtin.assert:
+        that:
+          - _binary.stat.exists
+          - _binary.stat.executable
+
+    - name: Check agent ISO exists
+      ansible.builtin.stat:
+        path: "{{ cluster_manifests_dir }}/agent.{{ expected_arch }}.iso"
+      register: _agent_iso
+
+    - name: Assert agent ISO exists
+      ansible.builtin.assert:
+        that:
+          - _agent_iso.stat.exists
+        fail_msg: "agent.{{ expected_arch }}.iso was not created in {{ cluster_manifests_dir }}"
+
+    - name: Assert agent ISO is not empty
+      ansible.builtin.assert:
+        that:
+          - _agent_iso.stat.size > 0
+        fail_msg: "agent.{{ expected_arch }}.iso exists but is empty"
+
+    - name: Check that PXE boot-artifacts directory was NOT created
+      ansible.builtin.stat:
+        path: "{{ cluster_manifests_dir }}/boot-artifacts"
+      register: _boot_artifacts
+
+    - name: Assert PXE boot-artifacts directory does not exist
+      ansible.builtin.assert:
+        that:
+          - not _boot_artifacts.stat.exists
+        fail_msg: "boot-artifacts/ should not exist when output_type is 'image'"

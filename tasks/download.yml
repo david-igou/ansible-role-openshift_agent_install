@@ -11,10 +11,26 @@
     state: directory
     mode: "0755"
 
+- name: Fetch sha256sum.txt for checksum verification
+  ansible.builtin.uri:
+    url: "{{ openshift_agent_install_checksum_url }}"
+    return_content: true
+  register: _sha256sum_response
+  when: openshift_agent_install_verify_checksum
+
+- name: Extract checksum for tarball
+  ansible.builtin.set_fact:
+    _tarball_checksum: >-
+      sha256:{{ _sha256sum_response.content
+        | regex_search('([a-f0-9]{64})\s+' ~ (openshift_agent_install_tarball_url | basename), '\1')
+        | first }}
+  when: openshift_agent_install_verify_checksum
+
 - name: Download openshift-install tarball
   ansible.builtin.get_url:
     url: "{{ openshift_agent_install_tarball_url }}"
     dest: "{{ openshift_agent_install_work_dir }}/openshift-install-linux.tar.gz"
+    checksum: "{{ _tarball_checksum | default(omit) }}"
     mode: "0644"
 
 - name: Extract openshift-install
