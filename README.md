@@ -192,31 +192,21 @@ The ISO will be written to `<work_dir>/cluster-manifests/agent.<arch>.iso`.
 ### Enabling GPG Signature Verification
 
 Verify the authenticity of `sha256sum.txt` before checking the tarball's hash.
-OCP uses binary `.gpg` signatures signed by the Red Hat release key;
-OKD uses ASCII-armored `.asc` signatures:
+OCP releases are signed with the [Red Hat release key](https://www.redhat.com/security/data/fd431d51.txt)
+and the signature URL is auto-constructed from the mirror variables:
 
 ```yaml
-# OCP — uses the auto-constructed .gpg URL
 - role: david-igou.openshift_agent_install
   vars:
-    openshift_agent_install_version: "4.20.14"
+    openshift_agent_install_version: "4.21.6"
     openshift_agent_install_verify_gpg: true
     openshift_agent_install_gpg_key: "https://www.redhat.com/security/data/fd431d51.txt"
     # ...
 ```
 
-```yaml
-# OKD — override signature URL to the .asc file
-- role: david-igou.openshift_agent_install
-  vars:
-    openshift_agent_install_version: "{{ okd_version }}"
-    openshift_agent_install_tarball_url: "{{ okd_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
-    openshift_agent_install_checksum_url: "{{ okd_release_url }}/sha256sum.txt"
-    openshift_agent_install_verify_gpg: true
-    openshift_agent_install_gpg_key: "/path/to/okd-signing-key.pub"
-    openshift_agent_install_checksum_signature_url: "{{ okd_release_url }}/sha256sum.txt.asc"
-    # ...
-```
+> **Note:** GPG signature verification is not currently possible for OKD releases.
+> Although OKD publishes `sha256sum.txt.asc` files, there is no public key available
+> to verify them. See [okd-project/okd#2092](https://github.com/okd-project/okd/issues/2092).
 
 ## Running Specific Phases
 
