@@ -29,6 +29,23 @@ openshift_agent_install_verify_checksum: true
 openshift_agent_install_checksum_url: >-
   {{ openshift_agent_install_mirror_url }}/{{ openshift_agent_install_arch }}/clients/ocp/{{ openshift_agent_install_version }}/sha256sum.txt
 
+# Verify the GPG signature on sha256sum.txt before trusting its checksums.
+# Requires gpg on the target host and openshift_agent_install_gpg_key to be set.
+# Only takes effect when openshift_agent_install_verify_checksum is also true.
+# This defaults to false because OKD does not publish a GPG signature and trusting GPG keys are a multi-step process.
+openshift_agent_install_verify_gpg: false
+
+# GPG public key for signature verification. Can be a URL (http/https) or
+# a file path on the target host.
+# OCP: "https://www.redhat.com/security/data/fd431d51.txt"
+# OKD not available: https://github.com/okd-project/okd/issues/2092
+openshift_agent_install_gpg_key: "https://www.redhat.com/security/data/fd431d51.txt"
+
+# URL to the detached GPG signature for sha256sum.txt.
+# OCP mirrors publish sha256sum.txt.gpg (binary), OKD publishes sha256sum.txt.asc (ASCII-armored).
+openshift_agent_install_checksum_signature_url: >-
+  {{ openshift_agent_install_mirror_url }}/{{ openshift_agent_install_arch }}/clients/ocp/{{ openshift_agent_install_version }}/sha256sum.txt.gpg
+
 # Validate that the oc client is available on PATH before running openshift-install.
 # openshift-install requires oc internally to extract release metadata.
 openshift_agent_install_validate_oc: true

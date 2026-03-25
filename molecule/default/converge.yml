@@ -9,6 +9,7 @@
     openshift_agent_install_tarball_url: "{{ okd_github_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
     openshift_agent_install_work_dir: /tmp/molecule-openshift-agent-test
     openshift_agent_install_checksum_url: "{{ okd_github_release_url }}/sha256sum.txt"
+    openshift_agent_install_verify_gpg: false
     openshift_agent_install_config:
       apiVersion: v1
       baseDomain: test.example.com

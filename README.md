@@ -7,6 +7,7 @@ Downloads `openshift-install` and generates agent-based installer boot artifacts
 - Ansible >= 2.15
 - `oc` client matching the target OpenShift version must be available on `PATH` (the role does not install it)
 - Internet access to download the `openshift-install` tarball and pull release metadata
+- `gpg` on the target host (only when `openshift_agent_install_verify_gpg` is enabled)
 
 ## Role Variables
 
@@ -29,6 +30,9 @@ Downloads `openshift-install` and generates agent-based installer boot artifacts
 | `openshift_agent_install_output_type` | `"pxe-files"` | Output type: `"pxe-files"` for PXE/iPXE boot artifacts, `"image"` for a bootable agent ISO |
 | `openshift_agent_install_verify_checksum` | `true` | Verify SHA256 checksum of the downloaded tarball. Disable for sources without `sha256sum.txt` |
 | `openshift_agent_install_checksum_url` | *(constructed from version, arch, mirror)* | URL to `sha256sum.txt` for checksum verification. Override for OKD or custom mirrors |
+| `openshift_agent_install_verify_gpg` | `false` | Verify GPG signature on `sha256sum.txt`. Requires `gpg` on target and `gpg_key` to be set |
+| `openshift_agent_install_gpg_key` | `""` | GPG public key for signature verification (URL or file path on target host) |
+| `openshift_agent_install_checksum_signature_url` | *(constructed for OCP `.gpg`)* | URL to GPG signature for `sha256sum.txt`. Supports both combined (`.gpg`) and detached (`.asc`) formats. Override for OKD |
 | `openshift_agent_install_validate_oc` | `true` | Validate that `oc` is on PATH before running `openshift-install` |
 | `openshift_agent_install_additional_manifests` | `[]` | List of extra manifests to place in `openshift/` directory |
 
@@ -185,6 +189,35 @@ Set `openshift_agent_install_output_type` to `"image"` to produce a bootable age
 
 The ISO will be written to `<work_dir>/cluster-manifests/agent.<arch>.iso`.
 
+### Enabling GPG Signature Verification
+
+Verify the authenticity of `sha256sum.txt` before checking the tarball's hash.
+OCP uses binary `.gpg` signatures signed by the Red Hat release key;
+OKD uses ASCII-armored `.asc` signatures:
+
+```yaml
+# OCP — uses the auto-constructed .gpg URL
+- role: david-igou.openshift_agent_install
+  vars:
+    openshift_agent_install_version: "4.20.14"
+    openshift_agent_install_verify_gpg: true
+    openshift_agent_install_gpg_key: "https://www.redhat.com/security/data/fd431d51.txt"
+    # ...
+```
+
+```yaml
+# OKD — override signature URL to the .asc file
+- role: david-igou.openshift_agent_install
+  vars:
+    openshift_agent_install_version: "{{ okd_version }}"
+    openshift_agent_install_tarball_url: "{{ okd_release_url }}/openshift-install-linux-{{ okd_version }}.tar.gz"
+    openshift_agent_install_checksum_url: "{{ okd_release_url }}/sha256sum.txt"
+    openshift_agent_install_verify_gpg: true
+    openshift_agent_install_gpg_key: "/path/to/okd-signing-key.pub"
+    openshift_agent_install_checksum_signature_url: "{{ okd_release_url }}/sha256sum.txt.asc"
+    # ...
+```
+
 ## Running Specific Phases
 
 ```bash
@@ -200,11 +233,13 @@ ansible-playbook site.yml --tags cleanup
 
 ## Testing
 
-Tests use [Molecule](https://molecule.readthedocs.io/) with Podman and OKD binaries:
+Tests use [Molecule](https://molecule.readthedocs.io/) with Podman:
 
 ```bash
 cd ansible-role-openshift_agent_install
-molecule test
+molecule test              # default scenario — PXE files with OKD
+molecule test -s iso       # ISO output with OKD
+molecule test -s gpg       # GPG signature verification with OCP mirror
 ```
 
 ## License

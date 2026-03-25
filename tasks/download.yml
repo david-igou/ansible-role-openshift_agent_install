@@ -11,20 +11,111 @@
     state: directory
     mode: "0755"
 
-- name: Fetch sha256sum.txt for checksum verification
-  ansible.builtin.uri:
+- name: Download sha256sum.txt
+  ansible.builtin.get_url:
     url: "{{ openshift_agent_install_checksum_url }}"
-    return_content: true
-  register: _sha256sum_response
+    dest: "{{ openshift_agent_install_work_dir }}/sha256sum.txt"
+    mode: "0644"
+  when: openshift_agent_install_verify_checksum
+
+# --- GPG signature verification ---
+
+- name: Validate that gpg_key is set when GPG verification is enabled
+  ansible.builtin.assert:
+    that:
+      - openshift_agent_install_gpg_key | length > 0
+    fail_msg: >-
+      openshift_agent_install_gpg_key must be set when
+      openshift_agent_install_verify_gpg is true (URL or file path)
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+
+- name: Create isolated GPG home directory
+  ansible.builtin.file:
+    path: "{{ openshift_agent_install_work_dir }}/.gnupg"
+    state: directory
+    mode: "0700"
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+
+- name: Download GPG public key from URL
+  ansible.builtin.get_url:
+    url: "{{ openshift_agent_install_gpg_key }}"
+    dest: "{{ openshift_agent_install_work_dir }}/.gnupg/signing-key.pub"
+    mode: "0644"
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+    - openshift_agent_install_gpg_key is match('^https?://')
+
+- name: Copy local GPG public key
+  ansible.builtin.copy:
+    src: "{{ openshift_agent_install_gpg_key }}"
+    dest: "{{ openshift_agent_install_work_dir }}/.gnupg/signing-key.pub"
+    mode: "0644"
+    remote_src: true
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+    - openshift_agent_install_gpg_key is not match('^https?://')
+
+- name: Import GPG public key
+  ansible.builtin.command:
+    cmd: >-
+      gpg --batch --no-tty
+      --homedir {{ openshift_agent_install_work_dir }}/.gnupg
+      --import {{ openshift_agent_install_work_dir }}/.gnupg/signing-key.pub
+  changed_when: true
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+
+- name: Download GPG signature for sha256sum.txt
+  ansible.builtin.get_url:
+    url: "{{ openshift_agent_install_checksum_signature_url }}"
+    dest: "{{ openshift_agent_install_work_dir }}/sha256sum.txt.sig"
+    mode: "0644"
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+
+- name: Verify GPG signature on sha256sum.txt
+  ansible.builtin.shell:
+    cmd: >-
+      gpg --batch --no-tty
+      --homedir {{ openshift_agent_install_work_dir }}/.gnupg
+      --verify
+      {{ openshift_agent_install_work_dir }}/sha256sum.txt.sig
+      {{ openshift_agent_install_work_dir }}/sha256sum.txt
+      ||
+      gpg --batch --no-tty
+      --homedir {{ openshift_agent_install_work_dir }}/.gnupg
+      --verify
+      {{ openshift_agent_install_work_dir }}/sha256sum.txt.sig
+  changed_when: false
+  when:
+    - openshift_agent_install_verify_checksum
+    - openshift_agent_install_verify_gpg
+
+# --- Checksum extraction ---
+
+- name: Read sha256sum.txt
+  ansible.builtin.slurp:
+    src: "{{ openshift_agent_install_work_dir }}/sha256sum.txt"
+  register: _sha256sum_content
   when: openshift_agent_install_verify_checksum
 
 - name: Extract checksum for tarball
   ansible.builtin.set_fact:
     _tarball_checksum: >-
-      sha256:{{ _sha256sum_response.content
+      sha256:{{ (_sha256sum_content.content | b64decode)
         | regex_search('([a-f0-9]{64})\s+' ~ (openshift_agent_install_tarball_url | basename), '\1')
         | first }}
   when: openshift_agent_install_verify_checksum
+
+# --- Download and extract ---
 
 - name: Download openshift-install tarball
   ansible.builtin.get_url:

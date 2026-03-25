@@ -1,0 +1,63 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    work_dir: /tmp/molecule-openshift-agent-test
+  tasks:
+    - name: Check openshift-install binary exists
+      ansible.builtin.stat:
+        path: "{{ work_dir }}/openshift-install"
+      register: _binary
+
+    - name: Assert openshift-install binary exists
+      ansible.builtin.assert:
+        that:
+          - _binary.stat.exists
+          - _binary.stat.executable
+
+    - name: Check sha256sum.txt was downloaded
+      ansible.builtin.stat:
+        path: "{{ work_dir }}/sha256sum.txt"
+      register: _sha256sum
+
+    - name: Assert sha256sum.txt exists
+      ansible.builtin.assert:
+        that:
+          - _sha256sum.stat.exists
+        fail_msg: "sha256sum.txt was not downloaded to {{ work_dir }}"
+
+    - name: Check GPG signature file was downloaded
+      ansible.builtin.stat:
+        path: "{{ work_dir }}/sha256sum.txt.sig"
+      register: _sig_file
+
+    - name: Assert GPG signature file exists
+      ansible.builtin.assert:
+        that:
+          - _sig_file.stat.exists
+        fail_msg: "sha256sum.txt.sig was not downloaded to {{ work_dir }}"
+
+    - name: Check isolated GPG home directory was created
+      ansible.builtin.stat:
+        path: "{{ work_dir }}/.gnupg"
+      register: _gnupg_dir
+
+    - name: Assert isolated GPG home directory exists
+      ansible.builtin.assert:
+        that:
+          - _gnupg_dir.stat.exists
+          - _gnupg_dir.stat.isdir
+        fail_msg: ".gnupg directory was not created in {{ work_dir }}"
+
+    - name: Check that the signing key was imported into isolated keyring
+      ansible.builtin.command:
+        cmd: gpg --batch --no-tty --homedir {{ work_dir }}/.gnupg --list-keys
+      register: _keyring
+      changed_when: false
+
+    - name: Assert keyring contains at least one key
+      ansible.builtin.assert:
+        that:
+          - _keyring.stdout | length > 0
+        fail_msg: "No keys found in the role's isolated GPG keyring"

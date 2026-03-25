@@ -1,0 +1,21 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars:
+    openshift_agent_install_version: "4.21.6"
+    openshift_agent_install_work_dir: /tmp/molecule-openshift-agent-test
+    openshift_agent_install_verify_gpg: true
+    openshift_agent_install_gpg_key: "https://www.redhat.com/security/data/fd431d51.txt"
+    openshift_agent_install_config: {}
+    openshift_agent_install_agent_config: {}
+  pre_tasks:
+    - name: Ensure gnupg is installed
+      ansible.builtin.dnf:
+        name: gnupg2
+        state: present
+  tasks:
+    - name: Run download tasks with GPG verification
+      ansible.builtin.include_role:
+        name: david-igou.openshift_agent_install
+        tasks_from: download.yml

@@ -62,6 +62,30 @@ argument_specs:
           a different path.
         type: str
 
+      openshift_agent_install_verify_gpg:
+        description: >-
+          Verify the GPG signature on sha256sum.txt before trusting its checksums.
+          Requires gpg on the target host and openshift_agent_install_gpg_key
+          to be set. Only effective when verify_checksum is also true.
+        type: bool
+        default: false
+
+      openshift_agent_install_gpg_key:
+        description: >-
+          GPG public key for signature verification. Can be a URL (http/https)
+          or a file path on the target host.
+          OCP example: "https://www.redhat.com/security/data/fd431d51.txt"
+        type: str
+        default: ""
+
+      openshift_agent_install_checksum_signature_url:
+        description: >-
+          URL to the detached GPG signature file for sha256sum.txt.
+          OCP mirrors publish sha256sum.txt.gpg (binary format),
+          OKD publishes sha256sum.txt.asc (ASCII-armored).
+          Auto-constructed for OCP; override for OKD or custom mirrors.
+        type: str
+
       openshift_agent_install_validate_oc:
         description: >-
           Validate that the oc client is available on PATH before running
