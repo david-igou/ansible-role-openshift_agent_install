@@ -31,7 +31,7 @@ Downloads `openshift-install` and generates agent-based installer boot artifacts
 | `openshift_agent_install_verify_checksum` | `true` | Verify SHA256 checksum of the downloaded tarball. Disable for sources without `sha256sum.txt` |
 | `openshift_agent_install_checksum_url` | *(constructed from version, arch, mirror)* | URL to `sha256sum.txt` for checksum verification. Override for OKD or custom mirrors |
 | `openshift_agent_install_verify_gpg` | `false` | Verify GPG signature on `sha256sum.txt`. Requires `gpg` on target and `gpg_key` to be set |
-| `openshift_agent_install_gpg_key` | `""` | GPG public key for signature verification (URL or file path on target host) |
+| `openshift_agent_install_gpg_key` | `"https://www.redhat.com/security/data/fd431d51.txt"` | GPG public key for signature verification (URL or file path on target host) |
 | `openshift_agent_install_checksum_signature_url` | *(constructed for OCP `.gpg`)* | URL to GPG signature for `sha256sum.txt`. Supports both combined (`.gpg`) and detached (`.asc`) formats. Override for OKD |
 | `openshift_agent_install_validate_oc` | `true` | Validate that `oc` is on PATH before running `openshift-install` |
 | `openshift_agent_install_additional_manifests` | `[]` | List of extra manifests to place in `openshift/` directory |

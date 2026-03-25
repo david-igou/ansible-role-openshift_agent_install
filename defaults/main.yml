@@ -41,7 +41,7 @@ openshift_agent_install_verify_gpg: false
 # OKD not available: https://github.com/okd-project/okd/issues/2092
 openshift_agent_install_gpg_key: "https://www.redhat.com/security/data/fd431d51.txt"
 
-# URL to the detached GPG signature for sha256sum.txt.
+# URL to the GPG signature for sha256sum.txt.
 # OCP mirrors publish sha256sum.txt.gpg (binary), OKD publishes sha256sum.txt.asc (ASCII-armored).
 openshift_agent_install_checksum_signature_url: >-
   {{ openshift_agent_install_mirror_url }}/{{ openshift_agent_install_arch }}/clients/ocp/{{ openshift_agent_install_version }}/sha256sum.txt.gpg

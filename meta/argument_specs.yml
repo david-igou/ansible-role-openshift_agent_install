@@ -74,15 +74,13 @@ argument_specs:
         description: >-
           GPG public key for signature verification. Can be a URL (http/https)
           or a file path on the target host.
-          OCP example: "https://www.redhat.com/security/data/fd431d51.txt"
         type: str
-        default: ""
+        default: https://www.redhat.com/security/data/fd431d51.txt
 
       openshift_agent_install_checksum_signature_url:
         description: >-
-          URL to the detached GPG signature file for sha256sum.txt.
-          OCP mirrors publish sha256sum.txt.gpg (binary format),
-          OKD publishes sha256sum.txt.asc (ASCII-armored).
+          URL to the GPG signature file for sha256sum.txt.
+          Supports both combined (.gpg) and detached (.asc) formats.
           Auto-constructed for OCP; override for OKD or custom mirrors.
         type: str
 
