@@ -31,6 +31,10 @@ jobs:
       - name: Install Ansible collections
         run: ansible-galaxy collection install containers.podman
 
-      - name: Run Molecule test
+      - name: Run Molecule test (pxe)
         run: molecule test
+        working-directory: ansible-role-openshift_agent_install
+
+      - name: Run Molecule test (iso)
+        run: molecule test -s iso
         working-directory: ansible-role-openshift_agent_install
